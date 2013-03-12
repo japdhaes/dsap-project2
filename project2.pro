@@ -11,7 +11,8 @@ SOURCES += main.cpp \
     zigrandom.c \
     zignor.c \
     cell.cpp \
-    verletalgo2.cpp
+    verletalgo2.cpp \
+    lib.cpp
 
 HEADERS += \
     crystal.h \
@@ -20,7 +21,8 @@ HEADERS += \
     zigrandom.h \
     zignor.h \
     cell.h \
-    verletalgo2.h
+    verletalgo2.h \
+    lib.h
 
 LIBS += -larmadillo
 # MPI Settings

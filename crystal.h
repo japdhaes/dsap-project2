@@ -70,6 +70,8 @@ class Crystal
         vec3 findClosestPosition(vec3 position, vec3 otherposition);
         void radialDistFunction();
 
+        void createCylinderPore(double r);
+        void boundCheck(Atom *atom);
 };
 
 #endif // CRYSTAL_H

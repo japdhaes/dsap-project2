@@ -2,7 +2,7 @@
 
 VerletAlgo2::VerletAlgo2(Crystal *crystal, double _h)
 {
-    this->debugging.open("/home/jonathan/projectsFSAP/project1/project1/debuglog.txt");
+    this->debugging.open("/home/jonathan/projectsFSAP/project2/project2/debuglog.txt");
     this->crystall=crystal;
     this->h=_h;
 }
@@ -370,7 +370,7 @@ vec3 VerletAlgo2::boundCheck(vec3 &position){
             answer(i)+=boundvec(i);
             //debugging << "new position(i) " << position(i) << endl;
         }
-        while(answer(i)>boundvec(i)){
+        while(answer(i)>=boundvec(i)){
             answer(i)-=boundvec(i);
         }
     }

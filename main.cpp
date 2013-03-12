@@ -127,7 +127,7 @@ string makeDirectory(){
     oss<<t;
     system(oss.str().c_str());
     stringstream answer;
-    answer << "/home/jonathan/projectsFSAP/project2/project2/output/";
+    answer << "/home/jonathan/projectsFSAP/project2/output/";
     answer << t<<"/";
     return answer.str();
 }
@@ -139,6 +139,8 @@ string outputFile(const string dirname, const string filename){
 }
 
 void simulationwithoutput(){
+    Printing p;
+
     time_t tinit = time(0);
     string dirname = makeDirectory();
 
@@ -161,14 +163,20 @@ void simulationwithoutput(){
 //    system("rm /home/jonathan/projectsFSAP/project1/project1/output/*.xyz");
 //    Crystal crystal(nc, b, seed, temperature);
 
-    string name="/home/jonathan/projectsFSAP/project2/project2/output/1363010751/locationatoms.00140.xyz";
+    string name="/home/jonathan/projectsFSAP/project2/output/1363095443/locationatoms.00499.xyz";
     Crystal crystal(name);
+
+    crystal.createCylinderPore(20);
+    string filename = p.createname(0);
+    string completename = outputFile(dirname, filename);
+    ofstream output;
+    output.open(completename.c_str());
+    output << crystal << endl;
     return;
 
     //VerletAlgo integrator(crystal);
     VerletAlgo2 integrator(&crystal, h);
 
-    Printing p;
 
 
 

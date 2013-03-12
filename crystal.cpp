@@ -13,23 +13,26 @@ Crystal::Crystal(string &filename){
     string garbage;
     if (myfile.is_open())
     {
+        //reading first line
         myfile>>nAtoms;
-        while(myfile.peek()!= '\n'){
-            myfile>>garbage;
-        }
+        myfile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        this->numberofatoms=nAtoms;
+
+        //reading second line
         myfile>>this->inittemp;
         myfile>>this->b;
         myfile>>this->nc;
-
-        while(myfile.peek()!= '\n'){
-            myfile>>garbage;
-        }
+        myfile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         cout << nAtoms << " number of atoms "<<endl;
+
+
+        //starting to read the atoms
         int j=0;
         while(myfile.good() && !myfile.eof()){
             myfile>>atomtype;
             position.zeros();
             velocity.zeros();
+
             for(int i=0; i<3; i++){
                 myfile>>position(i);
             }
@@ -39,16 +42,17 @@ Crystal::Crystal(string &filename){
             while(myfile.peek()!= '\n' && myfile.peek()!=EOF){
                 myfile>>garbage;
             }
+            if(j==0)
+                cout<<position.t();
             Atom* atom=new Atom(position/xunit, velocity);
+            atom->number=j;
+            j++;
             this->allatoms.push_back(atom);
         }
-        cout << "out of while loop"<<endl;
         this->allatoms.erase(this->allatoms.begin()+this->allatoms.size()-1);
-        cout << "out of while loop"<<endl;
-        cout <<this->allatoms.size()<<endl;
-        cout << *(this->allatoms[this->allatoms.size()-1])<<endl;
-      myfile.close();
+        myfile.close();
     }
+
 
     //setting crystal parameters
     this->boundary << nc*b/xunit << nc*b/xunit << nc*b/xunit;
@@ -61,6 +65,12 @@ Crystal::Crystal(string &filename){
     this->density=numberofatoms/volume;
     this->msqdplm=0;
 
+
+    //making sure that every atom is inside the crystal
+    for(int i=0; i<allatoms.size();i++){
+        Atom *atom=allatoms[i];
+        boundCheck(atom);
+    }
 
     //initializing crystal
     setvectorBC(3);
@@ -161,7 +171,6 @@ void Crystal::initializeCells(){
     int nrXYZ[3];
     for(int i=0; i<3; i++){
         nrXYZ[i]=round(boundary(i)/vectorBC(i));
-        cout << "set i="<<i<<"to be "<<nrXYZ[i]<<endl;
     }
 
     this->allcells.resize(nrXYZ[0]);
@@ -332,4 +341,41 @@ vec3 Crystal::findClosestPosition(vec3 position, vec3 otherposition){
         }
     }
     return answer;
+}
+
+void Crystal::createCylinderPore(double r){
+    r/=xunit;
+    cout << "inside createcylinderpore"<<endl;
+    //fi=fixed
+    string outside="Fi";
+    string inside="Ar";
+    double xcenter=0.5*boundary(0);
+    double ycenter=0.5*boundary(1);
+    double r2=r*r;
+    for(int i=0; i<allatoms.size();i++){
+        Atom *atom=allatoms[i];
+        vec3 r=atom->getPosition();
+        double dist=(r(0)-xcenter)*(r(0)-xcenter)+(r(1)-ycenter)*(r(1)-ycenter);
+        if(dist<r2){
+            atom->chemelement=inside;
+        }
+        else{
+            atom->chemelement=outside;
+        }
+    }
+}
+
+void Crystal::boundCheck(Atom* atom){
+    vec3 position=atom->getPosition();
+    for(int i=0; i<3; i++){
+        while(position(i)<0){
+            //debugging << "summing boundvec at i="<<i<< " position(i)=" << position(i);
+            position(i)+=boundary(i);
+            //debugging << "new position(i) " << position(i) << endl;
+        }
+        while(position(i)>=boundary(i)){
+            position(i)-=boundary(i);
+        }
+    }
+    atom->setPosition(position);
 }
