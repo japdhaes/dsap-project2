@@ -165,13 +165,17 @@ void simulationwithoutput(){
 
     string name="/home/jonathan/projectsFSAP/project2/output/1363095443/locationatoms.00499.xyz";
     Crystal crystal(name);
+    for(int i=0; i<20; i++){
+        crystal.createSphere(20.0, 30.0);
+        string filename = p.createname(i);
+        string completename = outputFile(dirname, filename);
+        ofstream output;
+        output.open(completename.c_str());
+        output << crystal << endl;
+    }
 
-    crystal.createCylinderPore(20);
-    string filename = p.createname(0);
-    string completename = outputFile(dirname, filename);
-    ofstream output;
-    output.open(completename.c_str());
-    output << crystal << endl;
+
+
     return;
 
     //VerletAlgo integrator(crystal);

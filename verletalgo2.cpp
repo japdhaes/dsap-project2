@@ -215,18 +215,9 @@ void VerletAlgo2::calcForce(Atom* atom, Atom* otheratom){
             //crystall->forces(i,j,k)=cutoffacceleration;
             //crystall->forces(j,i,k)=-1*cutoffacceleration;
         }
-        else if(temp<-1*cutoffacceleration){
+        else if(temp<-cutoffacceleration){
             temp=-cutoffacceleration;
         }
-// if(atom->number==0 && otheratom->number==586){
-// cout << "posatom0" << position <<endl;
-// cout << "posatom586"<<othervec<<endl;
-// cout << "closestvector"<<closestvector<<endl;
-// cout << relvec << endl;
-// cout << temp <<endl;
-// cout << "r2 "<<r2 << " r6 " <<r6 << " r12 " << r12 <<endl;
-// cout <<24*(2.0/r12-1.0/r6)/r2<<endl;
-// }
 
         oneacceler(k)+=temp;
         otheracceler(k)-=temp;
@@ -335,6 +326,9 @@ void VerletAlgo2::updateVelocity(Atom *atom){
 }
 
 void VerletAlgo2::updatePosition(Atom *atom){
+    if(atom->chemelement=="Fi"){
+        return;
+    }
     vec3 position=atom->getPosition();
     vec3 velocity=atom->getVelocity();
 

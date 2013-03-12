@@ -64,6 +64,7 @@ Crystal::Crystal(string &filename){
     this->volume=this->boundary(0)*this->boundary(1)*this->boundary(2);
     this->density=numberofatoms/volume;
     this->msqdplm=0;
+    this->idum=-1;
 
 
     //making sure that every atom is inside the crystal
@@ -378,4 +379,39 @@ void Crystal::boundCheck(Atom* atom){
         }
     }
     atom->setPosition(position);
+}
+
+void Crystal::createSphere(double begin, double end){
+    begin/=xunit;
+    end/=xunit;
+    //make r uniformly distributed in [a,b]
+    double r=ran2(&idum);
+    r*=(end-begin);
+    r+=begin;
+    double r2=r*r;
+
+    //position of random center of the sphere
+    vec3 center;
+    center << ran2(&idum)<< ran2(&idum)<< ran2(&idum);
+    for(int i=0; i<3; i++){
+        center(i)*=boundary(i);
+    }
+
+    string inside="Fi";
+    string outside="Ar";
+
+    for(int i=0; i<allatoms.size();i++){
+        Atom *atom=allatoms[i];
+        //only argon atoms can become fixed
+        if(atom->chemelement==outside){
+            vec3 pos=atom->getPosition();
+            double dis=0.0;
+            for(int j=0; j<3; j++){
+                dis+=(pos(j)-center(j))*(pos(j)-center(j));
+            }
+            if(dis<r2){
+                atom->chemelement=inside;
+            }
+        }
+    }
 }

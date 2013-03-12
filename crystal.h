@@ -7,6 +7,7 @@
 #include "cell.h"
 #include "zignor.h"
 #include "zigrandom.h"
+#include "lib.h"
 
 using namespace std;
 
@@ -72,6 +73,8 @@ class Crystal
 
         void createCylinderPore(double r);
         void boundCheck(Atom *atom);
+        long idum;
+        void createSphere(double begin, double end);
 };
 
 #endif // CRYSTAL_H
