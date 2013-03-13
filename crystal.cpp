@@ -318,22 +318,22 @@ void Crystal::radialDistFunction(){
                 norm+=(position(k)-otherposition(k))*(position(k)-otherposition(k));
             }
             norm=sqrt(norm);
-            distribution[int(norm/unit)]+=2;
+            distribution[int(norm/unit)]++;
         }
     }
     double average=0.0;
     for(int i=0; i<100; i++){
-        average+=distribution[i];
+        distribution[i]/=(4*3.1415926535897932384626*unit*(unit*i)*(unit*i)*100);
     }
-    average/=100;
     ofstream measurements;
     measurements.open("/home/jonathan/projectsFSAP/project2/output/simulationT150/radialdistribution.txt");
     for(int i=0; i<100; i++){
-        measurements<< i*unit <<" " <<distribution[i]/average<<endl;
+        measurements<< i*unit <<" " <<distribution[i]<<endl;
     }
     measurements.close();
 
 }
+
 
 vec3 Crystal::findClosestPosition(vec3 position, vec3 otherposition){
     vec3 answer; answer.fill(0);

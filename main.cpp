@@ -194,6 +194,7 @@ void simulationwithoutput(){
 
 
     crystal.radialDistFunction();
+    return;
 
 
     //VerletAlgo integrator(crystal);
