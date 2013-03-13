@@ -75,6 +75,8 @@ class Crystal
         void boundCheck(Atom *atom);
         long idum;
         void createSphere(double begin, double end);
+        int fixedatoms;
+        void removeHalfAtomsInCrystal();
 };
 
 #endif // CRYSTAL_H

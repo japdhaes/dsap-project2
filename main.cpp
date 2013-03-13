@@ -155,19 +155,37 @@ void simulationwithoutput(){
     //latice parameter in unit Angstrom
     double b=5.72;
     double temperature=0.851*tempunit;
-    int nrofthermalizingsteps=500;
-    int nrofstepstotakemeasurements=0;
+    int nrofthermalizingsteps=0;
+    int nrofstepstotakemeasurements=1000;
 
 
 
 //    system("rm /home/jonathan/projectsFSAP/project1/project1/output/*.xyz");
 //    Crystal crystal(nc, b, seed, temperature);
 
-    string name="/home/jonathan/projectsFSAP/project2/output/1363095443/locationatoms.00499.xyz";
+    //string name="/home/jonathan/projectsFSAP/project2/output/1363095443/locationatoms.00499.xyz";
+    //string name="/home/jonathan/projectsFSAP/project2/output/sphericalpores/locationatoms.00019.xyz";
+    string name="/home/jonathan/projectsFSAP/project2/output/simulationT150/locationatoms.00999.xyz";
     Crystal crystal(name);
-    for(int i=0; i<20; i++){
-        crystal.createSphere(20.0, 30.0);
-        string filename = p.createname(i);
+
+    bool makespheres=false;
+    bool makehalfdensity=false;
+
+
+    if(makespheres){
+        for(int i=0; i<20; i++){
+            crystal.createSphere(20.0, 30.0);
+            string filename = p.createname(i);
+            string completename = outputFile(dirname, filename);
+            ofstream output;
+            output.open(completename.c_str());
+            output << crystal << endl;
+        }
+    }
+
+    if(makehalfdensity){
+        crystal.removeHalfAtomsInCrystal();
+        string filename = p.createname(0);
         string completename = outputFile(dirname, filename);
         ofstream output;
         output.open(completename.c_str());
@@ -175,11 +193,13 @@ void simulationwithoutput(){
     }
 
 
+    crystal.radialDistFunction();
 
-    return;
 
     //VerletAlgo integrator(crystal);
     VerletAlgo2 integrator(&crystal, h);
+
+    crystal.inittemp=1.50;
 
 
 
@@ -203,12 +223,12 @@ void simulationwithoutput(){
         output << crystal << endl;
 
     }
-    return;
 
     for(int j=0; j<nrofstepstotakemeasurements; j++){
 
         integrator.integrate(false);
-
+        string filename = p.createname(j);
+        string completename = outputFile(dirname, filename);
 
         //integrator.integrate_noapprox();
         measurements << j<<" "<< j*integrator.h << " " <<crystal.temperature()<<" " << integrator.crystall->energy<<" " << integrator.crystall->ke<<" " << integrator.crystall->pe << " " << abs((integrator.crystall->energy - integrator.crystall->beginenergy)/integrator.crystall->beginenergy) <<" "<< integrator.crystall->pressure<< " " << integrator.crystall->msqdplm<<endl;
@@ -216,12 +236,11 @@ void simulationwithoutput(){
             cout << "now in step " << j << " doing measurements, i am processor  "  << endl;
         }
         ofstream output;
-//        output.open(p.createname(j).c_str());
-
+        output.open(completename.c_str());
         output << crystal << endl;
 
     }
-//    integrator.crystall->radialDistFunction();
+    integrator.crystall->radialDistFunction();
 
 
 }

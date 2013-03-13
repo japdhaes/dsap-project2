@@ -28,7 +28,7 @@ void VerletAlgo2::integrate(bool thermalize){
 
         vec3 nullvector; nullvector.zeros();
         crystall->allatoms[i]->setAcceler(nullvector);
-
+        crystall->allatoms[i]->localpressure=0;
     }
     this->crystall->msqdplm/=this->crystall->numberofatoms;
 //    cout << this->crystall->msqdplm <<endl;
@@ -208,7 +208,7 @@ void VerletAlgo2::calcForce(Atom* atom, Atom* otheratom){
     vec3 oneacceler=atom->getAcceler();
     vec3 otheracceler=otheratom->getAcceler();
     for(int k=0; k<3; k++){
-        double temp = 24*(2.0/r12-1.0/r6)*relvec(k)/r2;
+        double temp = 24.0*(2.0/r12-1.0/r6)*relvec(k)/r2;
         crystall->energy+=2.0*LJpotential( relvec2);
         if(temp>cutoffacceleration){
             temp=cutoffacceleration;
@@ -221,6 +221,9 @@ void VerletAlgo2::calcForce(Atom* atom, Atom* otheratom){
 
         oneacceler(k)+=temp;
         otheracceler(k)-=temp;
+
+        atom->localpressure+=temp*relvec(k);
+        otheratom->localpressure+=temp*relvec(k);
 
         crystall->pressure+=temp*relvec(k);
     }

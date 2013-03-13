@@ -4,6 +4,7 @@
 #define Xunit 3.405
 
 Crystal::Crystal(string &filename){
+    this->fixedatoms=0;
     //input from file
     ifstream myfile (filename.c_str());
     string atomtype;
@@ -39,13 +40,14 @@ Crystal::Crystal(string &filename){
             for(int i=0; i<3; i++){
                 myfile>>velocity(i);
             }
-            while(myfile.peek()!= '\n' && myfile.peek()!=EOF){
-                myfile>>garbage;
-            }
-            if(j==0)
-                cout<<position.t();
+            myfile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
             Atom* atom=new Atom(position/xunit, velocity);
             atom->number=j;
+            atom->chemelement=atomtype;
+            if(atomtype=="Fi"){
+                this->fixedatoms++;
+            }
             j++;
             this->allatoms.push_back(atom);
         }
@@ -60,6 +62,7 @@ Crystal::Crystal(string &filename){
     this->beginenergy=0;
     this->counter=0;
     this->pressure=0;
+
 
     this->volume=this->boundary(0)*this->boundary(1)*this->boundary(2);
     this->density=numberofatoms/volume;
@@ -95,6 +98,7 @@ Crystal::Crystal(unsigned int _nc, double _b, int &seed, double _temperature)
     this->beginenergy=0;
     this->counter=0;
     this->pressure=0;
+    this->fixedatoms=0;
 
     this->volume=this->boundary(0)*this->boundary(1)*this->boundary(2);
     this->density=numberofatoms/volume;
@@ -142,12 +146,17 @@ double Crystal::temperature()
     double temp=0;
     for(int i=0; i<allatoms.size();i++){
         Atom *atom=allatoms[i];
-        //temp+=0.5*dot(atom->getVelocity(), atom->getVelocity());
-        vec3 vel = atom->getVelocity();
-        double v = norm(vel,2);
-        temp+=0.5*v*v;
+        if(atom->chemelement!="Fi"){
+            //temp+=0.5*dot(atom->getVelocity(), atom->getVelocity());
+            vec3 vel = atom->getVelocity();
+            double v=0.0;
+            for(int j=0; j<3; j++){
+                v+=vel(j)*vel(j);
+            }
+            temp+=0.5*v;
+        }
     }
-    return temp*2.0/3/this->numberofatoms;
+    return temp*2.0/3/(this->numberofatoms-this->fixedatoms);
 }
 
 void Crystal::addAllAtomsToCells(){
@@ -253,7 +262,7 @@ ostream& operator<< (ostream& os , const Crystal& crystal){
     for(it=myvector.begin(); it!=myvector.end(); ++it){
         vec3 position=(*it)->getPosition();
         vec3 velocity=(*it)->getVelocity();
-        os << (*it)->chemelement << " "<< position(0)*xunit<< " " << position(1)*xunit << " " << position(2)*xunit << " " << velocity(0)<< " " << velocity(1)<< " "<< velocity(2)<< endl;
+        os << (*it)->chemelement << " "<< position(0)*xunit<< " " << position(1)*xunit << " " << position(2)*xunit << " " << velocity(0)<< " " << velocity(1)<< " "<< velocity(2)<< " " <<(*it)->localpressure<<endl;
 //        os << (*it)->chemelement << " "<< position(0)<< " " << position(1) << " " << position(2) << " " << velocity(0)<< " " << velocity(1)<< " "<< velocity(2)<< endl;
     }
     return os;
@@ -318,7 +327,7 @@ void Crystal::radialDistFunction(){
     }
     average/=100;
     ofstream measurements;
-    measurements.open("/home/jonathan/projectsFSAP/project2/output/radialdistributionsolid.txt");
+    measurements.open("/home/jonathan/projectsFSAP/project2/output/simulationT150/radialdistribution.txt");
     for(int i=0; i<100; i++){
         measurements<< i*unit <<" " <<distribution[i]/average<<endl;
     }
@@ -362,6 +371,10 @@ void Crystal::createCylinderPore(double r){
         }
         else{
             atom->chemelement=outside;
+            fixedatoms++;
+            vec3 nullvector;
+            nullvector.zeros();
+            atom->setVelocity(nullvector);
         }
     }
 }
@@ -411,7 +424,29 @@ void Crystal::createSphere(double begin, double end){
             }
             if(dis<r2){
                 atom->chemelement=inside;
+                vec3 nullvector;
+                nullvector.zeros();
+                atom->setVelocity(nullvector);
+                fixedatoms++;
             }
         }
     }
+}
+
+void Crystal::removeHalfAtomsInCrystal(){
+    vector<Atom*> oldsystem = this->allatoms;
+    vector<Atom*> newsystem;
+    for(int i=0; i<oldsystem.size();i++){
+        Atom *atom = oldsystem[i];
+        if(atom->chemelement=="Fi"){
+            newsystem.push_back(atom);
+        }
+        else{
+            if(ran2(&idum)<0.5){
+                newsystem.push_back(atom);
+            }
+        }
+    }
+    this->allatoms=newsystem;
+    this->numberofatoms=newsystem.size();
 }

@@ -37,6 +37,7 @@ class Atom
         Cell* currentcell;
         vec3 realposition;
         vec3 initialposition;
+        double localpressure;
     protected:
         vec3 position;
         vec3 velocity;
