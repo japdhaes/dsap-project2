@@ -12,6 +12,8 @@ void VerletAlgo2::integrate(bool thermalize){
     //debugging.open("/home/jonathan/projectsFSAP/project1/project1/debuglog2.txt", ios::app);
     crystall->energy=0;
     crystall->pressure=0;
+    crystall->ke=0;
+    crystall->pe=0;
 
     for(unsigned int i=0; i<crystall->allcells.size(); i++){
         for(unsigned int j=0; j<crystall->allcells.at(i).size();j++){
@@ -47,16 +49,19 @@ void VerletAlgo2::integrate(bool thermalize){
     crystall->pressure/=3*crystall->volume;
     crystall->pressure+=crystall->density*crystall->temperature();
 // crystall->pressure*=pressureunit;
-    crystall->pe=crystall->energy;
-    //cout << "potential energy "<< potentialenergy<<endl;
 
     for(unsigned int i=0; i<crystall->allatoms.size(); i++){
-        updateVelocity(crystall->allatoms[i]);
+        Atom *atom = crystall->allatoms[i];
+        if(atom->chemelement!="Fi"){
+            vec3 v=atom->getVelocity();
 
-        //kinetic energy of the atom in the crystal
-        crystall->energy+=0.5*dot(crystall->allatoms[i]->getVelocity(),crystall->allatoms[i]->getVelocity());
+            updateVelocity(atom);
+
+            //kinetic energy of the atom in the crystal
+            crystall->ke+=0.5*dot(v,v);
+        }
     }
-    crystall->ke= crystall->energy-crystall->pe;
+    crystall->energy= crystall->ke+crystall->pe;
 // cout <<"crystal energy "<<crystall->energy <<endl;
     if(thermalize){
         thermostatBerendsen();
@@ -217,7 +222,7 @@ void VerletAlgo2::calcForce(Atom* atom, Atom* otheratom){
 
     vec3 oneacceler=atom->getAcceler();
     vec3 otheracceler=otheratom->getAcceler();
-    crystall->energy+=2.0*LJpotential(relvec);
+    crystall->pe+=2.0*LJpotential(relvec);
     for(int k=0; k<3; k++){
         double temp = 24.0*(2.0/r12-1.0/r6)*relvec(k)/r2;
 
