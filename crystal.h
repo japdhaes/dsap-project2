@@ -77,6 +77,8 @@ class Crystal
         void createSphere(double begin, double end);
         int fixedatoms;
         void removeHalfAtomsInCrystal();
+        void setTemperature(double t);
+
 };
 
 #endif // CRYSTAL_H

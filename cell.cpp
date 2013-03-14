@@ -71,3 +71,13 @@ bool Cell::isAtomInCell(Atom *atom){
     }
     return false;
 }
+
+int Cell::countAtoms(){
+    Atom *atom=first;
+    int answer=0;
+    while(atom!=NULL){
+        answer++;
+        atom=atom->nextAtom;
+    }
+    return answer;
+}

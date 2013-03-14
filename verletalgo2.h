@@ -4,7 +4,7 @@
 #include <armadillo>
 #include "crystal.h"
 
-const double cutoffacceleration=200;
+const double cutoffacceleration=1e4;
 //time unit of h =2.1569 *  10^3 fs
 
 using namespace arma;
@@ -29,10 +29,14 @@ public:
     void findXYZCellIndices(int *nrXYZ, int *nrX, int *nrY, int *nrZ);
     vec3 findClosestPosition(vec3 &position, vec3 &otherposition);
     vec3 boundCheck(vec3 &position);
-    double LJpotential(vec3 relvec);
+    double LJpotential(vec3 &relvec);
     void thermostatAnders();
     void thermostatBerendsen();
     void thermostatAndersen();
+
+
+    bool moreForce();
+    void addCteForce(vec3 &acceler);
 };
 
 #endif // VERLETALGO2_H

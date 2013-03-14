@@ -151,60 +151,53 @@ void simulationwithoutput(){
 
     int seed = -1;
     int nc=20;
-    double h=0.005;
+    double h=0.01;
     //latice parameter in unit Angstrom
     double b=5.72;
     double temperature=0.851*tempunit;
-    int nrofthermalizingsteps=0;
-    int nrofstepstotakemeasurements=1000;
+    int nrofthermalizingsteps=1000;
+    int nrofstepstotakemeasurements=0;
 
 
-
-//    system("rm /home/jonathan/projectsFSAP/project1/project1/output/*.xyz");
 //    Crystal crystal(nc, b, seed, temperature);
 
-    //string name="/home/jonathan/projectsFSAP/project2/output/1363095443/locationatoms.00499.xyz";
+//    string name="/home/jonathan/projectsFSAP/project2/output/1363095443/locationatoms.00499.xyz";
     //string name="/home/jonathan/projectsFSAP/project2/output/sphericalpores/locationatoms.00019.xyz";
-    string name="/home/jonathan/projectsFSAP/project2/output/simulationT150/locationatoms.00999.xyz";
+    //string name="/home/jonathan/projectsFSAP/project2/output/simulationT150/locationatoms.00999.xyz";
+    string name="/home/jonathan/projectsFSAP/project2/output/thermstandardcrystal/locationatoms.00950.xyz";
     Crystal crystal(name);
+    crystal.setTemperature(temperature);
 
-    bool makespheres=false;
-    bool makehalfdensity=false;
+    bool makespheres=true;
+    bool makehalfdensity=true;
 
 
     if(makespheres){
         for(int i=0; i<20; i++){
             crystal.createSphere(20.0, 30.0);
-            string filename = p.createname(i);
-            string completename = outputFile(dirname, filename);
-            ofstream output;
-            output.open(completename.c_str());
-            output << crystal << endl;
+//            string filename = p.createname(i);
+//            string completename = outputFile(dirname, filename);
+//            ofstream output;
+//            output.open(completename.c_str());
+//            output << crystal << endl;
         }
     }
 
     if(makehalfdensity){
         crystal.removeHalfAtomsInCrystal();
-        string filename = p.createname(0);
-        string completename = outputFile(dirname, filename);
-        ofstream output;
-        output.open(completename.c_str());
-        output << crystal << endl;
+//        string filename = p.createname(0);
+//        string completename = outputFile(dirname, filename);
+//        ofstream output;
+//        output.open(completename.c_str());
+//        output << crystal << endl;
     }
 
-
-    crystal.radialDistFunction();
-    return;
 
 
     //VerletAlgo integrator(crystal);
     VerletAlgo2 integrator(&crystal, h);
 
-    crystal.inittemp=1.50;
-
-
-
-
+//    crystal.inittemp=1.50;
 
     ofstream measurements;
     string measname = outputFile(dirname, "measurements.txt");
@@ -212,36 +205,40 @@ void simulationwithoutput(){
     measurements << "#1:timesteps #2: time #3:temperature  #4:total energy #5:kinetic energy #6:potential energy #7:relative energy error #8:pressure #9:mean square displacement"<<endl;
     for(int j=0; j<nrofthermalizingsteps; j++){
         integrator.integrate(true);
-        string filename = p.createname(j);
-        string completename = outputFile(dirname, filename);
+        cout << "Timestep " <<j<<" temperature:" <<integrator.crystall->temperature()<<endl;
+
         measurements << j<<" "<< j*integrator.h << " " <<crystal.temperature()<<" " << integrator.crystall->energy<<" " << integrator.crystall->ke<<" " << integrator.crystall->pe << " " << abs((integrator.crystall->energy - integrator.crystall->beginenergy)/integrator.crystall->beginenergy) <<" "<< integrator.crystall->pressure<< " " << integrator.crystall->msqdplm<<endl;
 
         if(j%50==0){
             cout << "now in step " << j << " in the thermilisation phase" << endl;
+            string filename = p.createname(j);
+            string completename = outputFile(dirname, filename);
+            ofstream output;
+            output.open(completename.c_str());
+            output << crystal << endl;
+            output.close();
         }
-        ofstream output;
-        output.open(completename.c_str());
-        output << crystal << endl;
 
     }
 
-    for(int j=0; j<nrofstepstotakemeasurements; j++){
-
+    for(int j=nrofthermalizingsteps; j<nrofstepstotakemeasurements+nrofthermalizingsteps; j++){
+        cout << "Timestep " <<j<<" temperature:" <<integrator.crystall->temperature()<<endl;
         integrator.integrate(false);
-        string filename = p.createname(j);
-        string completename = outputFile(dirname, filename);
 
         //integrator.integrate_noapprox();
         measurements << j<<" "<< j*integrator.h << " " <<crystal.temperature()<<" " << integrator.crystall->energy<<" " << integrator.crystall->ke<<" " << integrator.crystall->pe << " " << abs((integrator.crystall->energy - integrator.crystall->beginenergy)/integrator.crystall->beginenergy) <<" "<< integrator.crystall->pressure<< " " << integrator.crystall->msqdplm<<endl;
+
         if(j%50==0){
             cout << "now in step " << j << " doing measurements, i am processor  "  << endl;
+            string filename = p.createname(j);
+            string completename = outputFile(dirname, filename);
+            ofstream output;
+            output.open(completename.c_str());
+            output << crystal << endl;
+            output.close();
         }
-        ofstream output;
-        output.open(completename.c_str());
-        output << crystal << endl;
-
     }
-    integrator.crystall->radialDistFunction();
+//    integrator.crystall->radialDistFunction();
 
 
 }

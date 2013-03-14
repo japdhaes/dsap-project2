@@ -192,6 +192,7 @@ void Crystal::initializeCells(){
                 allcells.at(i).at(j).at(k).x=i;
                 allcells.at(i).at(j).at(k).y=j;
                 allcells.at(i).at(j).at(k).z=k;
+                allcells.at(i).at(j).at(k).first=NULL;
                 allcells.at(i).at(j).at(k).vectorBC=this->vectorBC;
             }
         }
@@ -449,4 +450,13 @@ void Crystal::removeHalfAtomsInCrystal(){
     }
     this->allatoms=newsystem;
     this->numberofatoms=newsystem.size();
+
+
+
+    initializeCells();
+    addAllAtomsToCells();
+}
+
+void Crystal::setTemperature(double t){
+    this->inittemp=t/tempunit;
 }

@@ -30,9 +30,7 @@ void VerletAlgo2::integrate(bool thermalize){
         crystall->allatoms[i]->setAcceler(nullvector);
         crystall->allatoms[i]->localpressure=0;
     }
-    this->crystall->msqdplm/=this->crystall->numberofatoms;
-//    cout << this->crystall->msqdplm <<endl;
-// cout << crystall->temperature()<<endl;
+    this->crystall->msqdplm/=(this->crystall->numberofatoms-this->crystall->fixedatoms);
     for(unsigned int i=0; i<crystall->allcells.size(); i++){
         for(unsigned int j=0; j<crystall->allcells.at(i).size();j++){
             for(unsigned int k=0; k<crystall->allcells.at(i).at(j).size(); k++){
@@ -79,7 +77,7 @@ void VerletAlgo2::thermostatAnders(){
 }
 
 void VerletAlgo2::thermostatBerendsen(){
-    double tau=20.0*h;
+    double tau=15.0*h;
     double tem=crystall->temperature();
     double tbath=crystall->inittemp;
     double gamma = 1+h/tau*(tbath/tem-1);
@@ -128,12 +126,16 @@ void VerletAlgo2::integrate_noapprox(){
 
 void VerletAlgo2::updateAcceler(Atom *atom){
     bool debugg=false;
+    int i=0;
 
     Atom* otheratom=atom->nextAtom;
     while(otheratom!=NULL){
         calcForce(atom, otheratom);
+        i++;
         otheratom=otheratom->nextAtom;
     }
+//    cout << "integrated "<<i<<" times to other atoms in the same cell"<<endl;
+    i=0;
 
     //ofstream debugging;
     //debugging.open("/home/jonathan/projectsFSAP/project1/project1/debuglog2.txt", ios::app);
@@ -147,21 +149,29 @@ void VerletAlgo2::updateAcceler(Atom *atom){
     findXYZCellIndices(nrXYZ, nrX, nrY, nrZ);
     //indices of all neighbouring cells are now in nrX, nrY and nrZ
 
+    int l=0;
     for(int i=0; i<3; i++){
         for(int j=0; j<3;j++){
             for(int k=0;k<3;k++){
+
                 if(nrX[i]!=-1 &nrY[j]!=-1&nrZ[k]!=-1){
                     if(crystall->allcells.at(nrX[i]).at(nrY[j]).at(nrZ[k]).visited!=true){
                         otheratom = crystall->allcells.at(nrX[i]).at(nrY[j]).at(nrZ[k]).first;
                         while(otheratom!=NULL){
                             calcForce(atom, otheratom);
+//                            cout << "integrating atom "<<atom->number<<" to other atom "<<otheratom->number<<endl;
+//                            cout << counter<<endl;
+
                             otheratom=otheratom->nextAtom;
                         }
                     }
                 }
+//                cout << "integrated "<<l<<" times to other atoms in the other cells"<<endl;
             }
         }
     }
+//    cout << "l="<<l<<endl;
+
 }
 
 void VerletAlgo2::updateAccelerNoApprox(Atom *atom){
@@ -207,17 +217,22 @@ void VerletAlgo2::calcForce(Atom* atom, Atom* otheratom){
 
     vec3 oneacceler=atom->getAcceler();
     vec3 otheracceler=otheratom->getAcceler();
+    crystall->energy+=2.0*LJpotential(relvec);
     for(int k=0; k<3; k++){
         double temp = 24.0*(2.0/r12-1.0/r6)*relvec(k)/r2;
-        crystall->energy+=2.0*LJpotential( relvec2);
-        if(temp>cutoffacceleration){
-            temp=cutoffacceleration;
-            //crystall->forces(i,j,k)=cutoffacceleration;
-            //crystall->forces(j,i,k)=-1*cutoffacceleration;
-        }
-        else if(temp<-cutoffacceleration){
-            temp=-cutoffacceleration;
-        }
+
+//        if(temp>cutoffacceleration){
+////            cout << "CUTOFF"<<endl;
+////            cout << temp << endl;
+////            cout << "first atom "<<atom->number << " "<< position.t()<<endl;
+////            cout << "other atom "<<otheratom->number<< " "<< othervec.t()<<endl;
+//            temp=cutoffacceleration;
+//        }
+//        else if(temp<-cutoffacceleration){
+//            cout << "CUTOFF"<<endl;
+//            cout << temp << endl;
+//            temp=-cutoffacceleration;
+//        }
 
         oneacceler(k)+=temp;
         otheracceler(k)-=temp;
@@ -305,17 +320,21 @@ void VerletAlgo2::findXYZCellIndices(int* nrXYZ, int* nrX, int* nrY, int* nrZ){
 
 vec3 VerletAlgo2::findClosestPosition(vec3 &position, vec3 &otherposition){
     vec3 answer; answer.fill(0);
-    bool debugg=false;
     for(int i=0; i<3; i++){
         double projectionother = otherposition(i);
         double projectionpos = position(i);
-        double l=this->crystall->boundary(i);
-        double distance=l;
-        for(int j=-1; j<2; j++){
-            distance=abs(projectionpos-(projectionother+j*l));
-            if(distance<=l/2){
-                answer(i)=projectionother+j*l;
+        double L=this->crystall->boundary(i);
+        if(abs(projectionother-projectionpos)>L/2){
+            double distance=L;
+            for(int j=-1; j<2; j+=2){
+                distance=abs(projectionpos-(projectionother+j*L));
+                if(distance<=L/2){
+                    answer(i)=projectionother+j*L;
+                }
             }
+        }
+        else{
+            answer(i)=projectionother;
         }
     }
     return answer;
@@ -324,6 +343,10 @@ vec3 VerletAlgo2::findClosestPosition(vec3 &position, vec3 &otherposition){
 void VerletAlgo2::updateVelocity(Atom *atom){
     vec3 velocity=atom->getVelocity();
     vec3 acceler=atom->getAcceler();
+    if(norm(acceler,2)>cutoffacceleration){
+        cout << atom->chemelement<<endl;
+        cout << norm(acceler,2)<<endl;
+    }
     velocity+=0.5*acceler*this->h;
     atom->setVelocity(velocity);
 }
@@ -374,10 +397,14 @@ vec3 VerletAlgo2::boundCheck(vec3 &position){
     return answer;
 }
 
-double VerletAlgo2::LJpotential(vec3 relvec){
+double VerletAlgo2::LJpotential(vec3 &relvec){
     double r2=relvec(0)*relvec(0)+relvec(1)*relvec(1)+relvec(2)*relvec(2);
     double r6=r2*r2*r2;
     double r12=r6*r6;
+    double answer=4.0*(1.0/r12-1.0/r6);
+    if(answer<-1.2){
+    cout<<"potential energy "<< answer<< " relvec = "<<relvec.t()<<endl;
+    }
 
-    return 4*(1.0/r12-1.0/r6);
+    return answer;
 }
